@@ -1,0 +1,480 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+  <meta charset="UTF-8">
+  <title>TaskFlow</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      background: #0f172a;
+      color: #e2e8f0;
+      min-height: 100vh;
+    }
+
+    nav {
+      background: #1e293b;
+      padding: 16px 32px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-bottom: 1px solid #334155;
+    }
+    nav h1 { color: #6366f1; font-size: 20px; }
+    nav button {
+      background: transparent;
+      border: 1px solid #334155;
+      color: #94a3b8;
+      padding: 8px 16px;
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 13px;
+    }
+    nav button:hover { border-color: #6366f1; color: #6366f1; }
+
+    .board-bar {
+      background: #1e293b;
+      padding: 12px 32px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      border-bottom: 1px solid #334155;
+      flex-wrap: wrap;
+    }
+    .board-bar select {
+      background: #0f172a;
+      border: 1px solid #334155;
+      color: #e2e8f0;
+      padding: 8px 12px;
+      border-radius: 8px;
+      font-size: 14px;
+      cursor: pointer;
+    }
+    .board-bar input {
+      background: #0f172a;
+      border: 1px solid #334155;
+      color: #e2e8f0;
+      padding: 8px 12px;
+      border-radius: 8px;
+      font-size: 14px;
+      width: 200px;
+    }
+    .btn-primary {
+      background: #6366f1;
+      color: white;
+      border: none;
+      padding: 8px 16px;
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 14px;
+      font-weight: 600;
+    }
+    .btn-primary:hover { background: #4f46e5; }
+    .btn-danger {
+      background: transparent;
+      border: 1px solid #ef4444;
+      color: #ef4444;
+      padding: 8px 16px;
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 13px;
+    }
+    .btn-danger:hover { background: #ef4444; color: white; }
+
+    .kanban {
+      display: flex;
+      gap: 20px;
+      padding: 32px;
+      overflow-x: auto;
+      align-items: flex-start;
+    }
+
+    .column {
+      background: #1e293b;
+      border-radius: 12px;
+      width: 280px;
+      min-width: 280px;
+      padding: 16px;
+      border: 1px solid #334155;
+    }
+
+    .column-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 16px;
+    }
+    .column-title { font-weight: 600; font-size: 15px; color: #e2e8f0; }
+    .column-count {
+      background: #334155;
+      color: #94a3b8;
+      font-size: 12px;
+      padding: 2px 8px;
+      border-radius: 999px;
+    }
+    .btn-del-col {
+      background: none;
+      border: none;
+      color: #475569;
+      cursor: pointer;
+      font-size: 16px;
+      padding: 2px 6px;
+      border-radius: 4px;
+    }
+    .btn-del-col:hover { color: #ef4444; }
+
+    .task-list { display: flex; flex-direction: column; gap: 10px; min-height: 40px; }
+
+    .task-card {
+      background: #0f172a;
+      border: 1px solid #334155;
+      border-radius: 8px;
+      padding: 12px;
+      cursor: grab;
+      transition: border-color 0.2s, transform 0.1s;
+    }
+    .task-card:hover { border-color: #6366f1; }
+    .task-card.dragging { opacity: 0.4; transform: scale(0.98); }
+
+    .task-title { font-size: 14px; font-weight: 500; margin-bottom: 6px; }
+    .task-desc { font-size: 12px; color: #64748b; margin-bottom: 8px; line-height: 1.4; }
+
+    .task-footer {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .priority {
+      font-size: 11px;
+      padding: 2px 8px;
+      border-radius: 999px;
+      font-weight: 600;
+    }
+    .priority-low    { background: #14532d; color: #86efac; }
+    .priority-medium { background: #713f12; color: #fde68a; }
+    .priority-high   { background: #450a0a; color: #fca5a5; }
+
+    .btn-del-task {
+      background: none;
+      border: none;
+      color: #475569;
+      cursor: pointer;
+      font-size: 13px;
+    }
+    .btn-del-task:hover { color: #ef4444; }
+
+    .add-task-form { margin-top: 12px; display: flex; flex-direction: column; gap: 8px; }
+    .add-task-form input,
+    .add-task-form textarea,
+    .add-task-form select {
+      background: #0f172a;
+      border: 1px solid #334155;
+      color: #e2e8f0;
+      padding: 8px 10px;
+      border-radius: 8px;
+      font-size: 13px;
+      font-family: inherit;
+      resize: none;
+    }
+    .add-task-form input:focus,
+    .add-task-form textarea:focus { border-color: #6366f1; outline: none; }
+
+    .add-task-btn {
+      background: none;
+      border: 1px dashed #334155;
+      color: #64748b;
+      width: 100%;
+      padding: 8px;
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 13px;
+      margin-top: 8px;
+      transition: all 0.2s;
+    }
+    .add-task-btn:hover { border-color: #6366f1; color: #6366f1; }
+
+    .add-column {
+      background: #1e293b44;
+      border: 2px dashed #334155;
+      border-radius: 12px;
+      width: 280px;
+      min-width: 280px;
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      align-items: center;
+      justify-content: center;
+    }
+    .add-column input {
+      background: #0f172a;
+      border: 1px solid #334155;
+      color: #e2e8f0;
+      padding: 8px 12px;
+      border-radius: 8px;
+      font-size: 14px;
+      width: 100%;
+    }
+
+    .empty-state {
+      color: #334155;
+      font-size: 13px;
+      text-align: center;
+      padding: 16px 0;
+    }
+
+    .drag-over { border: 2px dashed #6366f1 !important; }
+  </style>
+</head>
+<body>
+
+<nav>
+  <h1>⚡ TaskFlow</h1>
+  <button onclick="logout()">Sair</button>
+</nav>
+
+<div class="board-bar">
+  <select id="board-select" onchange="loadBoard()">
+    <option value="">Selecionar board...</option>
+  </select>
+  <input type="text" id="new-board-name" placeholder="Nome do novo board" />
+  <button class="btn-primary" onclick="createBoard()">+ Board</button>
+  <button class="btn-danger" onclick="deleteBoard()">Deletar board</button>
+</div>
+
+<div class="kanban" id="kanban"></div>
+
+<script>
+  const API = 'http://127.0.0.1:8000/api';
+  let currentBoard = null;
+  let draggedTask = null;
+
+  const token = () => localStorage.getItem('access');
+
+  const headers = () => ({
+    'Content-Type': 'application/json',
+    'Authorization': `Bearer ${token()}`
+  });
+
+  if (!token()) window.location.href = 'index.html';
+
+  // ── BOARDS ──────────────────────────────────────────
+  async function loadBoards() {
+    const res = await fetch(`${API}/boards/`, { headers: headers() });
+    if (res.status === 401) return logout();
+    const boards = await res.json();
+
+    const sel = document.getElementById('board-select');
+    sel.innerHTML = '<option value="">Selecionar board...</option>';
+    boards.forEach(b => {
+      const opt = document.createElement('option');
+      opt.value = b.id;
+      opt.textContent = b.title;
+      sel.appendChild(opt);
+    });
+
+    if (currentBoard) {
+      sel.value = currentBoard;
+      loadBoard();
+    }
+  }
+
+  async function createBoard() {
+    const name = document.getElementById('new-board-name').value.trim();
+    if (!name) return;
+    const res = await fetch(`${API}/boards/`, {
+      method: 'POST',
+      headers: headers(),
+      body: JSON.stringify({ title: name })
+    });
+    const board = await res.json();
+    currentBoard = board.id;
+    document.getElementById('new-board-name').value = '';
+    await loadBoards();
+  }
+
+  async function deleteBoard() {
+    if (!currentBoard) return;
+    if (!confirm('Deletar este board e tudo nele?')) return;
+    await fetch(`${API}/boards/${currentBoard}/`, { method: 'DELETE', headers: headers() });
+    currentBoard = null;
+    document.getElementById('kanban').innerHTML = '';
+    await loadBoards();
+  }
+
+  async function loadBoard() {
+    currentBoard = document.getElementById('board-select').value;
+    if (!currentBoard) { document.getElementById('kanban').innerHTML = ''; return; }
+    renderKanban();
+  }
+
+  // ── KANBAN ──────────────────────────────────────────
+  async function renderKanban() {
+    const res = await fetch(`${API}/boards/${currentBoard}/columns/`, { headers: headers() });
+    const columns = await res.json();
+
+    const kanban = document.getElementById('kanban');
+    kanban.innerHTML = '';
+
+    for (const col of columns) {
+      const tasksRes = await fetch(`${API}/columns/${col.id}/tasks/`, { headers: headers() });
+      const tasks = await tasksRes.json();
+      kanban.appendChild(buildColumn(col, tasks));
+    }
+
+    kanban.appendChild(buildAddColumn());
+  }
+
+  function buildColumn(col, tasks) {
+    const div = document.createElement('div');
+    div.className = 'column';
+    div.dataset.colId = col.id;
+
+    div.innerHTML = `
+      <div class="column-header">
+        <span class="column-title">${col.title}</span>
+        <div style="display:flex;gap:6px;align-items:center">
+          <span class="column-count">${tasks.length}</span>
+          <button class="btn-del-col" onclick="deleteColumn(${col.id})" title="Deletar coluna">✕</button>
+        </div>
+      </div>
+      <div class="task-list" id="task-list-${col.id}"></div>
+      <button class="add-task-btn" onclick="toggleAddTask(${col.id})">+ Adicionar tarefa</button>
+      <div class="add-task-form" id="add-task-form-${col.id}" style="display:none">
+        <input type="text" id="task-title-${col.id}" placeholder="Título da tarefa" />
+        <textarea id="task-desc-${col.id}" rows="2" placeholder="Descrição (opcional)"></textarea>
+        <select id="task-priority-${col.id}">
+          <option value="low">🟢 Baixa</option>
+          <option value="medium" selected>🟡 Média</option>
+          <option value="high">🔴 Alta</option>
+        </select>
+        <button class="btn-primary" onclick="createTask(${col.id})">Salvar</button>
+      </div>
+    `;
+
+    const list = div.querySelector(`#task-list-${col.id}`);
+
+    if (tasks.length === 0) {
+      list.innerHTML = '<p class="empty-state">Nenhuma tarefa</p>';
+    } else {
+      tasks.forEach(t => list.appendChild(buildTask(t)));
+    }
+
+    list.addEventListener('dragover', e => {
+      e.preventDefault();
+      list.classList.add('drag-over');
+    });
+    list.addEventListener('dragleave', () => list.classList.remove('drag-over'));
+    list.addEventListener('drop', async e => {
+      e.preventDefault();
+      list.classList.remove('drag-over');
+      if (!draggedTask) return;
+      await fetch(`${API}/tasks/${draggedTask}/move/`, {
+        method: 'PATCH',
+        headers: headers(),
+        body: JSON.stringify({ column_id: col.id, order: 0 })
+      });
+      renderKanban();
+    });
+
+    return div;
+  }
+
+  function buildTask(task) {
+    const div = document.createElement('div');
+    div.className = 'task-card';
+    div.draggable = true;
+    div.dataset.taskId = task.id;
+
+    const priorityLabel = { low: 'Baixa', medium: 'Média', high: 'Alta' };
+    const priorityClass = { low: 'priority-low', medium: 'priority-medium', high: 'priority-high' };
+
+    div.innerHTML = `
+      <div class="task-title">${task.title}</div>
+      ${task.description ? `<div class="task-desc">${task.description}</div>` : ''}
+      <div class="task-footer">
+        <span class="priority ${priorityClass[task.priority] || 'priority-medium'}">
+          ${priorityLabel[task.priority] || 'Média'}
+        </span>
+        <button class="btn-del-task" onclick="deleteTask(${task.id})">🗑</button>
+      </div>
+    `;
+
+    div.addEventListener('dragstart', () => {
+      draggedTask = task.id;
+      div.classList.add('dragging');
+    });
+    div.addEventListener('dragend', () => {
+      draggedTask = null;
+      div.classList.remove('dragging');
+    });
+
+    return div;
+  }
+
+  function buildAddColumn() {
+    const div = document.createElement('div');
+    div.className = 'add-column';
+    div.innerHTML = `
+      <p style="color:#64748b;font-size:13px">Nova coluna</p>
+      <input type="text" id="new-col-name" placeholder="Ex: Em progresso" />
+      <button class="btn-primary" style="width:100%" onclick="createColumn()">+ Adicionar</button>
+    `;
+    return div;
+  }
+
+  // ── COLUMNS ─────────────────────────────────────────
+  async function createColumn() {
+    const name = document.getElementById('new-col-name').value.trim();
+    if (!name) return;
+    await fetch(`${API}/boards/${currentBoard}/columns/`, {
+      method: 'POST',
+      headers: headers(),
+      body: JSON.stringify({ title: name })
+    });
+    renderKanban();
+  }
+
+  async function deleteColumn(colId) {
+    if (!confirm('Deletar esta coluna e todas as tarefas?')) return;
+    await fetch(`${API}/columns/${colId}/`, { method: 'DELETE', headers: headers() });
+    renderKanban();
+  }
+
+  // ── TASKS ────────────────────────────────────────────
+  function toggleAddTask(colId) {
+    const form = document.getElementById(`add-task-form-${colId}`);
+    form.style.display = form.style.display === 'none' ? 'flex' : 'none';
+  }
+
+  async function createTask(colId) {
+    const title = document.getElementById(`task-title-${colId}`).value.trim();
+    const description = document.getElementById(`task-desc-${colId}`).value.trim();
+    const priority = document.getElementById(`task-priority-${colId}`).value;
+    if (!title) return;
+    await fetch(`${API}/columns/${colId}/tasks/`, {
+      method: 'POST',
+      headers: headers(),
+      body: JSON.stringify({ title, description, priority })
+    });
+    renderKanban();
+  }
+
+  async function deleteTask(taskId) {
+    await fetch(`${API}/tasks/${taskId}/`, { method: 'DELETE', headers: headers() });
+    renderKanban();
+  }
+
+  // ── AUTH ─────────────────────────────────────────────
+  function logout() {
+    localStorage.clear();
+    window.location.href = 'index.html';
+  }
+
+  // ── INIT ─────────────────────────────────────────────
+  loadBoards();
+</script>
+
+</body>
+</html>
