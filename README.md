@@ -55,14 +55,14 @@ JavaScript (Vanilla)
 
 taskflow/
 ├── backend/
-│   ├── config/          → configurações do Django
-│   ├── tasks/            → app principal (models, views, serializers)
+│   ├── config/          # configurações Django
+│   ├── tasks/           # app principal (models, views, serializers)
 │   ├── requirements.txt
 │   └── manage.py
 └── frontend/
-    ├── index.html        → tela de login/cadastro
-    └── board.html        → tela do kanban
-
+    ├── index.html       # login/cadastro
+    └── board.html       # kanban
+    
 ⚙️ Como rodar localmente
 
 Backend
