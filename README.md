@@ -2,7 +2,6 @@
 
 Aplicação de gerenciamento de tarefas estilo Kanban, desenvolvida com Django REST Framework no backend e JavaScript puro no frontend.
 
-Mostrar Imagem
 
 📸 Preview
 
@@ -86,11 +85,19 @@ Abra a pasta frontend/ no VS Code e use a extensão Live Server para abrir o ind
 
 O frontend espera a API rodando em http://127.0.0.1:8000. Ajuste a constante API nos arquivos .html caso necessário.
 
+📡 Endpoints da API
 
-
-📡 Principais endpoints da API
-
-MétodoEndpointDescriçãoPOST/api/register/Cadastro de usuárioPOST/api/token/Login (retorna access/refresh token)GET/POST/api/boards/Listar/criar boardsGET/PUT/DELETE/api/boards/{id}/Detalhes/editar/deletar boardGET/POST/api/boards/{id}/columns/Listar/criar colunasDELETE/api/columns/{id}/Deletar colunaGET/POST/api/columns/{id}/tasks/Listar/criar tarefasPUT/DELETE/api/tasks/{id}/Editar/deletar tarefaPATCH/api/tasks/{id}/move/Mover tarefa entre colunas
+| Método         | Endpoint                    | Descrição             |
+| -------------- | --------------------------- | --------------------- |
+| POST           | `/api/register/`            | Cadastro de usuário   |
+| POST           | `/api/token/`               | Login (JWT)           |
+| GET/POST       | `/api/boards/`              | Listar/criar boards   |
+| GET/PUT/DELETE | `/api/boards/{id}/`         | Detalhes do board     |
+| GET/POST       | `/api/boards/{id}/columns/` | Colunas               |
+| DELETE         | `/api/columns/{id}/`        | Deletar coluna        |
+| GET/POST       | `/api/columns/{id}/tasks/`  | Tarefas               |
+| PUT/DELETE     | `/api/tasks/{id}/`          | Editar/deletar tarefa |
+| PATCH          | `/api/tasks/{id}/move/`     | Mover tarefa          |
 
 🎯 Próximos passos
 
