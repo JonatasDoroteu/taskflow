@@ -100,13 +100,11 @@ O frontend espera a API rodando em http://127.0.0.1:8000. Ajuste a constante API
 | PATCH          | `/api/tasks/{id}/move/`     | Mover tarefa          |
 
 🎯 Próximos passos
-
-
- Deploy do backend no Railway
- Deploy do frontend no Vercel
- Testes automatizados
- Edição de boards e colunas (atualmente só criar/deletar)
-
+Deploy do backend no Railway
+Deploy do frontend no Vercel
+Testes automatizados
+Edição de boards e colunas
+Melhorias de UX/UI
 
 👤 Autor
 
