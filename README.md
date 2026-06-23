@@ -3,16 +3,16 @@
 Aplicação de gerenciamento de tarefas estilo Kanban, desenvolvida com Django REST Framework no backend e JavaScript puro no frontend.
 
 
-📸 Preview
+## 📸 Preview
+
+### Login e Cadastro
+![Login e Cadastro](screenshots/TaskFlow3.png)
 
 ### Kanban Board
-
 ![Kanban Board](screenshots/TaskFlow.png)
 
 ### Gerenciamento de Boards
-
 ![Boards](screenshots/TaskFlow2.png)
-
 
 
 
