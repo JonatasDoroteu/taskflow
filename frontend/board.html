@@ -60,6 +60,35 @@
       font-size: 14px;
       width: 200px;
     }
+
+    /* ── Filtro por prioridade ── */
+    .filter-bar {
+      background: #1e293b;
+      padding: 10px 32px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      border-bottom: 1px solid #334155;
+      flex-wrap: wrap;
+    }
+    .filter-bar span { font-size: 13px; color: #64748b; margin-right: 4px; }
+    .filter-btn {
+      background: #0f172a;
+      border: 1px solid #334155;
+      color: #94a3b8;
+      padding: 5px 14px;
+      border-radius: 999px;
+      cursor: pointer;
+      font-size: 12px;
+      font-weight: 600;
+      transition: all 0.2s;
+    }
+    .filter-btn:hover { border-color: #6366f1; color: #6366f1; }
+    .filter-btn.active { background: #6366f1; border-color: #6366f1; color: white; }
+    .filter-btn.active-low    { background: #14532d; border-color: #86efac; color: #86efac; }
+    .filter-btn.active-medium { background: #713f12; border-color: #fde68a; color: #fde68a; }
+    .filter-btn.active-high   { background: #450a0a; border-color: #fca5a5; color: #fca5a5; }
+
     .btn-primary {
       background: #6366f1;
       color: white;
@@ -97,7 +126,9 @@
       min-width: 280px;
       padding: 16px;
       border: 1px solid #334155;
+      transition: border-color 0.2s;
     }
+    .column.drag-over { border-color: #6366f1; background: #1e293bcc; }
 
     .column-header {
       display: flex;
@@ -124,7 +155,15 @@
     }
     .btn-del-col:hover { color: #ef4444; }
 
-    .task-list { display: flex; flex-direction: column; gap: 10px; min-height: 40px; }
+    .task-list {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      min-height: 40px;
+      transition: background 0.15s;
+      border-radius: 8px;
+      padding: 4px;
+    }
 
     .task-card {
       background: #0f172a;
@@ -132,10 +171,31 @@
       border-radius: 8px;
       padding: 12px;
       cursor: grab;
-      transition: border-color 0.2s, transform 0.1s;
+      transition: border-color 0.2s, transform 0.1s, opacity 0.2s;
+      user-select: none;
     }
+    .task-card:active { cursor: grabbing; }
     .task-card:hover { border-color: #6366f1; }
-    .task-card.dragging { opacity: 0.4; transform: scale(0.98); }
+    .task-card.dragging { opacity: 0.35; transform: scale(0.97); }
+    .task-card.drag-placeholder {
+      border: 2px dashed #6366f1;
+      background: #1e293b;
+      opacity: 0.5;
+    }
+
+    /* ── Alerta de data vencida ── */
+    .task-card.overdue { border-color: #ef4444 !important; }
+    .task-card.overdue .task-title::after {
+      content: ' ⚠️';
+      font-size: 12px;
+    }
+    .due-date {
+      font-size: 11px;
+      margin-top: 6px;
+      color: #64748b;
+    }
+    .due-date.overdue { color: #ef4444; font-weight: 600; }
+    .due-date.soon { color: #fde68a; }
 
     .task-title { font-size: 14px; font-weight: 500; margin-bottom: 6px; }
     .task-desc { font-size: 12px; color: #64748b; margin-bottom: 8px; line-height: 1.4; }
@@ -144,6 +204,7 @@
       display: flex;
       justify-content: space-between;
       align-items: center;
+      margin-top: 8px;
     }
     .priority {
       font-size: 11px;
@@ -154,6 +215,9 @@
     .priority-low    { background: #14532d; color: #86efac; }
     .priority-medium { background: #713f12; color: #fde68a; }
     .priority-high   { background: #450a0a; color: #fca5a5; }
+
+    /* tarefa filtrada (oculta) */
+    .task-card.hidden-filter { display: none; }
 
     .btn-del-task {
       background: none;
@@ -224,7 +288,26 @@
       padding: 16px 0;
     }
 
-    .drag-over { border: 2px dashed #6366f1 !important; }
+    /* ── Toast de feedback ── */
+    .toast {
+      position: fixed;
+      bottom: 24px;
+      right: 24px;
+      background: #1e293b;
+      border: 1px solid #334155;
+      color: #e2e8f0;
+      padding: 12px 20px;
+      border-radius: 10px;
+      font-size: 13px;
+      z-index: 999;
+      opacity: 0;
+      transform: translateY(10px);
+      transition: all 0.3s;
+      pointer-events: none;
+    }
+    .toast.show { opacity: 1; transform: translateY(0); }
+    .toast.success { border-color: #86efac; color: #86efac; }
+    .toast.error   { border-color: #fca5a5; color: #fca5a5; }
   </style>
 </head>
 <body>
@@ -243,15 +326,25 @@
   <button class="btn-danger" onclick="deleteBoard()">Deletar board</button>
 </div>
 
+<!-- ── Barra de filtros por prioridade ── -->
+<div class="filter-bar">
+  <span>Filtrar:</span>
+  <button class="filter-btn active" data-filter="all"    onclick="setFilter('all')">Todas</button>
+  <button class="filter-btn"        data-filter="low"    onclick="setFilter('low')">🟢 Baixa</button>
+  <button class="filter-btn"        data-filter="medium" onclick="setFilter('medium')">🟡 Média</button>
+  <button class="filter-btn"        data-filter="high"   onclick="setFilter('high')">🔴 Alta</button>
+</div>
+
+<div class="toast" id="toast"></div>
 <div class="kanban" id="kanban"></div>
 
 <script>
   const API = 'http://127.0.0.1:8000/api';
-  let currentBoard = null;
-  let draggedTask = null;
+  let currentBoard  = null;
+  let draggedTaskId = null;
+  let activeFilter  = 'all';
 
-  const token = () => localStorage.getItem('access');
-
+  const token   = () => localStorage.getItem('access');
   const headers = () => ({
     'Content-Type': 'application/json',
     'Authorization': `Bearer ${token()}`
@@ -259,7 +352,59 @@
 
   if (!token()) window.location.href = 'index.html';
 
-  // ── BOARDS ──────────────────────────────────────────
+  // ── Toast ────────────────────────────────────────────
+  function showToast(msg, type = 'success') {
+    const t = document.getElementById('toast');
+    t.textContent = msg;
+    t.className = `toast ${type} show`;
+    setTimeout(() => t.classList.remove('show'), 2500);
+  }
+
+  // ── Filtro por prioridade ────────────────────────────
+  function setFilter(filter) {
+    activeFilter = filter;
+
+    // Atualiza botões ativos
+    document.querySelectorAll('.filter-btn').forEach(btn => {
+      btn.classList.remove('active', 'active-low', 'active-medium', 'active-high');
+    });
+    const activeBtn = document.querySelector(`[data-filter="${filter}"]`);
+    if (filter === 'all') {
+      activeBtn.classList.add('active');
+    } else {
+      activeBtn.classList.add(`active-${filter}`);
+    }
+
+    // Mostra/oculta as tarefas sem recarregar do servidor
+    document.querySelectorAll('.task-card').forEach(card => {
+      if (filter === 'all' || card.dataset.priority === filter) {
+        card.classList.remove('hidden-filter');
+      } else {
+        card.classList.add('hidden-filter');
+      }
+    });
+  }
+
+  // ── Data vencida ─────────────────────────────────────
+  function getDueDateInfo(dueDateStr) {
+    if (!dueDateStr) return null;
+    const today    = new Date(); today.setHours(0,0,0,0);
+    const dueDate  = new Date(dueDateStr + 'T00:00:00');
+    const diffDays = Math.ceil((dueDate - today) / (1000 * 60 * 60 * 24));
+    return { dueDate, diffDays };
+  }
+
+  function formatDueDate(dueDateStr) {
+    if (!dueDateStr) return '';
+    const info = getDueDateInfo(dueDateStr);
+    const fmt  = info.dueDate.toLocaleDateString('pt-BR');
+    if (info.diffDays < 0)  return { text: `⚠ Venceu em ${fmt}`, cls: 'overdue' };
+    if (info.diffDays === 0) return { text: `🔔 Vence hoje!`, cls: 'overdue' };
+    if (info.diffDays <= 2)  return { text: `⏰ Vence em ${fmt}`, cls: 'soon' };
+    return { text: `📅 ${fmt}`, cls: '' };
+  }
+
+  // ── BOARDS ───────────────────────────────────────────
   async function loadBoards() {
     const res = await fetch(`${API}/boards/`, { headers: headers() });
     if (res.status === 401) return logout();
@@ -274,23 +419,20 @@
       sel.appendChild(opt);
     });
 
-    if (currentBoard) {
-      sel.value = currentBoard;
-      loadBoard();
-    }
+    if (currentBoard) { sel.value = currentBoard; loadBoard(); }
   }
 
   async function createBoard() {
     const name = document.getElementById('new-board-name').value.trim();
     if (!name) return;
-    const res = await fetch(`${API}/boards/`, {
-      method: 'POST',
-      headers: headers(),
+    const res   = await fetch(`${API}/boards/`, {
+      method: 'POST', headers: headers(),
       body: JSON.stringify({ title: name })
     });
     const board = await res.json();
     currentBoard = board.id;
     document.getElementById('new-board-name').value = '';
+    showToast('Board criado!');
     await loadBoards();
   }
 
@@ -300,6 +442,7 @@
     await fetch(`${API}/boards/${currentBoard}/`, { method: 'DELETE', headers: headers() });
     currentBoard = null;
     document.getElementById('kanban').innerHTML = '';
+    showToast('Board deletado.', 'error');
     await loadBoards();
   }
 
@@ -309,21 +452,22 @@
     renderKanban();
   }
 
-  // ── KANBAN ──────────────────────────────────────────
+  // ── KANBAN ───────────────────────────────────────────
   async function renderKanban() {
-    const res = await fetch(`${API}/boards/${currentBoard}/columns/`, { headers: headers() });
+    const res     = await fetch(`${API}/boards/${currentBoard}/columns/`, { headers: headers() });
     const columns = await res.json();
-
-    const kanban = document.getElementById('kanban');
+    const kanban  = document.getElementById('kanban');
     kanban.innerHTML = '';
 
     for (const col of columns) {
       const tasksRes = await fetch(`${API}/columns/${col.id}/tasks/`, { headers: headers() });
-      const tasks = await tasksRes.json();
+      const tasks    = await tasksRes.json();
       kanban.appendChild(buildColumn(col, tasks));
     }
-
     kanban.appendChild(buildAddColumn());
+
+    // Aplica filtro ativo após renderizar
+    setFilter(activeFilter);
   }
 
   function buildColumn(col, tasks) {
@@ -335,20 +479,21 @@
       <div class="column-header">
         <span class="column-title">${col.title}</span>
         <div style="display:flex;gap:6px;align-items:center">
-          <span class="column-count">${tasks.length}</span>
+          <span class="column-count" id="count-${col.id}">${tasks.length}</span>
           <button class="btn-del-col" onclick="deleteColumn(${col.id})" title="Deletar coluna">✕</button>
         </div>
       </div>
       <div class="task-list" id="task-list-${col.id}"></div>
       <button class="add-task-btn" onclick="toggleAddTask(${col.id})">+ Adicionar tarefa</button>
       <div class="add-task-form" id="add-task-form-${col.id}" style="display:none">
-        <input type="text" id="task-title-${col.id}" placeholder="Título da tarefa" />
-        <textarea id="task-desc-${col.id}" rows="2" placeholder="Descrição (opcional)"></textarea>
-        <select id="task-priority-${col.id}">
+        <input type="text"  id="task-title-${col.id}"    placeholder="Título da tarefa" />
+        <textarea           id="task-desc-${col.id}"     rows="2" placeholder="Descrição (opcional)"></textarea>
+        <select             id="task-priority-${col.id}">
           <option value="low">🟢 Baixa</option>
           <option value="medium" selected>🟡 Média</option>
           <option value="high">🔴 Alta</option>
         </select>
+        <input type="date"  id="task-due-${col.id}"      title="Data de vencimento (opcional)" />
         <button class="btn-primary" onclick="createTask(${col.id})">Salvar</button>
       </div>
     `;
@@ -361,53 +506,121 @@
       tasks.forEach(t => list.appendChild(buildTask(t)));
     }
 
+    // ── Drag and drop na coluna ──
     list.addEventListener('dragover', e => {
       e.preventDefault();
-      list.classList.add('drag-over');
+      div.classList.add('drag-over');
+
+      // Mostra onde a tarefa vai cair
+      const afterEl = getDragAfterElement(list, e.clientY);
+      const placeholder = document.querySelector('.drag-placeholder');
+      if (placeholder) placeholder.remove();
+
+      const ph = document.createElement('div');
+      ph.className = 'task-card drag-placeholder';
+      ph.style.height = '48px';
+
+      if (!afterEl) {
+        list.appendChild(ph);
+      } else {
+        list.insertBefore(ph, afterEl);
+      }
     });
-    list.addEventListener('dragleave', () => list.classList.remove('drag-over'));
+
+    list.addEventListener('dragleave', e => {
+      // Só remove se saiu da coluna de verdade
+      if (!div.contains(e.relatedTarget)) {
+        div.classList.remove('drag-over');
+        const placeholder = document.querySelector('.drag-placeholder');
+        if (placeholder) placeholder.remove();
+      }
+    });
+
     list.addEventListener('drop', async e => {
       e.preventDefault();
-      list.classList.remove('drag-over');
-      if (!draggedTask) return;
-      await fetch(`${API}/tasks/${draggedTask}/move/`, {
+      div.classList.remove('drag-over');
+      const placeholder = document.querySelector('.drag-placeholder');
+      if (placeholder) placeholder.remove();
+
+      if (!draggedTaskId) return;
+
+      // Calcula a nova ordem baseada na posição do drop
+      const afterEl = getDragAfterElement(list, e.clientY);
+      const cards   = [...list.querySelectorAll('.task-card:not(.dragging)')];
+      let newOrder  = afterEl
+        ? cards.indexOf(afterEl)
+        : cards.length;
+
+      await fetch(`${API}/tasks/${draggedTaskId}/move/`, {
         method: 'PATCH',
         headers: headers(),
-        body: JSON.stringify({ column_id: col.id, order: 0 })
+        body: JSON.stringify({ column_id: col.id, order: newOrder })
       });
+
+      showToast('Tarefa movida!');
       renderKanban();
     });
 
     return div;
   }
 
+  // Retorna o elemento depois do qual a tarefa deve ser inserida
+  function getDragAfterElement(container, y) {
+    const draggableEls = [...container.querySelectorAll('.task-card:not(.dragging)')];
+    return draggableEls.reduce((closest, child) => {
+      const box    = child.getBoundingClientRect();
+      const offset = y - box.top - box.height / 2;
+      if (offset < 0 && offset > closest.offset) {
+        return { offset, element: child };
+      }
+      return closest;
+    }, { offset: Number.NEGATIVE_INFINITY }).element;
+  }
+
   function buildTask(task) {
     const div = document.createElement('div');
     div.className = 'task-card';
     div.draggable = true;
-    div.dataset.taskId = task.id;
+    div.dataset.taskId  = task.id;
+    div.dataset.priority = task.priority;
 
     const priorityLabel = { low: 'Baixa', medium: 'Média', high: 'Alta' };
     const priorityClass = { low: 'priority-low', medium: 'priority-medium', high: 'priority-high' };
 
+    // ── Data de vencimento ──
+    let dueDateHtml = '';
+    let overdueClass = '';
+    if (task.due_date) {
+      const info = formatDueDate(task.due_date);
+      dueDateHtml  = `<div class="due-date ${info.cls}">${info.text}</div>`;
+      if (info.cls === 'overdue') overdueClass = 'overdue';
+    }
+
+    if (overdueClass) div.classList.add('overdue');
+
     div.innerHTML = `
       <div class="task-title">${task.title}</div>
       ${task.description ? `<div class="task-desc">${task.description}</div>` : ''}
+      ${dueDateHtml}
       <div class="task-footer">
         <span class="priority ${priorityClass[task.priority] || 'priority-medium'}">
           ${priorityLabel[task.priority] || 'Média'}
         </span>
-        <button class="btn-del-task" onclick="deleteTask(${task.id})">🗑</button>
+        <button class="btn-del-task" onclick="deleteTask(${task.id}, event)">🗑</button>
       </div>
     `;
 
-    div.addEventListener('dragstart', () => {
-      draggedTask = task.id;
+    // ── Drag events ──
+    div.addEventListener('dragstart', e => {
+      draggedTaskId = task.id;
       div.classList.add('dragging');
+      e.dataTransfer.effectAllowed = 'move';
     });
     div.addEventListener('dragend', () => {
-      draggedTask = null;
+      draggedTaskId = null;
       div.classList.remove('dragging');
+      document.querySelectorAll('.drag-placeholder').forEach(p => p.remove());
+      document.querySelectorAll('.column').forEach(c => c.classList.remove('drag-over'));
     });
 
     return div;
@@ -424,21 +637,22 @@
     return div;
   }
 
-  // ── COLUMNS ─────────────────────────────────────────
+  // ── COLUMNS ──────────────────────────────────────────
   async function createColumn() {
     const name = document.getElementById('new-col-name').value.trim();
     if (!name) return;
     await fetch(`${API}/boards/${currentBoard}/columns/`, {
-      method: 'POST',
-      headers: headers(),
+      method: 'POST', headers: headers(),
       body: JSON.stringify({ title: name })
     });
+    showToast('Coluna criada!');
     renderKanban();
   }
 
   async function deleteColumn(colId) {
     if (!confirm('Deletar esta coluna e todas as tarefas?')) return;
     await fetch(`${API}/columns/${colId}/`, { method: 'DELETE', headers: headers() });
+    showToast('Coluna deletada.', 'error');
     renderKanban();
   }
 
@@ -449,20 +663,24 @@
   }
 
   async function createTask(colId) {
-    const title = document.getElementById(`task-title-${colId}`).value.trim();
+    const title       = document.getElementById(`task-title-${colId}`).value.trim();
     const description = document.getElementById(`task-desc-${colId}`).value.trim();
-    const priority = document.getElementById(`task-priority-${colId}`).value;
+    const priority    = document.getElementById(`task-priority-${colId}`).value;
+    const due_date    = document.getElementById(`task-due-${colId}`).value || null;
     if (!title) return;
+
     await fetch(`${API}/columns/${colId}/tasks/`, {
-      method: 'POST',
-      headers: headers(),
-      body: JSON.stringify({ title, description, priority })
+      method: 'POST', headers: headers(),
+      body: JSON.stringify({ title, description, priority, due_date })
     });
+    showToast('Tarefa criada!');
     renderKanban();
   }
 
-  async function deleteTask(taskId) {
+  async function deleteTask(taskId, e) {
+    e.stopPropagation(); // evita acionar drag
     await fetch(`${API}/tasks/${taskId}/`, { method: 'DELETE', headers: headers() });
+    showToast('Tarefa deletada.', 'error');
     renderKanban();
   }
 
