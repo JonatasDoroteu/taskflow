@@ -1,6 +1,7 @@
 ⚡ TaskFlow
 
 Aplicação de gerenciamento de tarefas estilo Kanban, desenvolvida com Django REST Framework no backend e JavaScript puro no frontend.
+🔗 **[Ver projeto ao vivo](https://taskflow-delta-eight.vercel.app/index.html)**
 
 
 ## 📸 Preview
