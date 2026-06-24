@@ -169,7 +169,7 @@ Qualquer `git push` na branch `main` dispara re-deploy automático no Railway e 
 🎯 Próximos passos
 ~~Deploy do backend no Railway~~ ✅
 ~~Deploy do frontend no Vercel~~ ✅
-Testes automatizados
+Testes automatizados ✅
 Edição de boards e colunas
 Melhorias de UX/UI
 
