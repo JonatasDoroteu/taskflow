@@ -1,4 +1,4 @@
-markdown# ⚡ TaskFlow
+⚡ TaskFlow
 
 Aplicação de gerenciamento de tarefas estilo Kanban, desenvolvida com **Django REST Framework** no backend e **React** (Vite) no frontend.
 
